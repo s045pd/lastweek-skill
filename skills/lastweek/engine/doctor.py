@@ -10,7 +10,7 @@ from engine.net import Fetcher, FetcherError, UrlFetcher
 def run_doctor(fetcher: Fetcher | None = None) -> dict:
     client = fetcher or UrlFetcher()
     rows = [
-        _probe("reddit", lambda: client.json("https://api.pullpush.io/reddit/search/submission/", params={"q": "test", "size": 1})),
+        _probe_reddit(client),
         _probe("hn", lambda: client.json("https://hn.algolia.com/api/v1/search", params={"query": "test", "hitsPerPage": 1})),
         _probe("github", lambda: client.json("https://api.github.com/rate_limit")),
         _probe("markets", lambda: client.json("https://gamma-api.polymarket.com/public-search", params={"q": "test"})),
@@ -25,6 +25,25 @@ def run_doctor(fetcher: Fetcher | None = None) -> dict:
         }
     )
     return {"ok": all(row["ok"] for row in rows if row["lane"] != "video"), "lanes": rows}
+
+
+def _probe_reddit(client: Fetcher) -> dict:
+    try:
+        client.json(
+            "https://api.pullpush.io/reddit/search/submission/",
+            params={"q": "test", "size": 1},
+        )
+        return {"lane": "reddit", "ok": True, "message": "reachable"}
+    except FetcherError as pullpush_error:
+        try:
+            client.text("https://www.reddit.com/search.rss?q=test&sort=new&t=week")
+            return {
+                "lane": "reddit",
+                "ok": True,
+                "message": f"rss fallback ({pullpush_error})",
+            }
+        except FetcherError as rss_error:
+            return {"lane": "reddit", "ok": False, "message": f"{pullpush_error}; {rss_error}"}
 
 
 def _probe(lane: str, call) -> dict:

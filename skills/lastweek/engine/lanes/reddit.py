@@ -1,4 +1,4 @@
-"""Reddit lane: Pullpush first, public RSS as fallback."""
+"""Reddit lane: public RSS first, Pullpush as backup."""
 
 from __future__ import annotations
 
@@ -16,6 +16,13 @@ PULLPUSH_SUB = "https://api.pullpush.io/reddit/search/submission/"
 PULLPUSH_COM = "https://api.pullpush.io/reddit/search/comment/"
 RSS_SEARCH = "https://www.reddit.com/search.rss"
 ATOM = "{http://www.w3.org/2005/Atom}"
+REDDIT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/atom+xml,application/xml,text/xml;q=0.9,*/*;q=0.8",
+}
 
 
 def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetcher) -> LaneReport:
@@ -24,16 +31,19 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetch
     clips: list[Clip] = []
     errors: list[str] = []
     try:
-        clips.extend(_pullpush(fetcher, queries, hints.subreddits, window, limit))
+        clips.extend(_rss(fetcher, queries, hints.subreddits, window, limit))
     except FetcherError as exc:
         errors.append(str(exc))
+    pullpush_ok = False
     if not clips:
         try:
-            clips.extend(_rss(fetcher, queries, hints.subreddits, window, limit))
+            clips.extend(_pullpush(fetcher, queries, hints.subreddits, window, limit))
+            pullpush_ok = True
         except FetcherError as extra:
             errors.append(str(extra))
     unique = _dedupe(clips)[:limit]
-    _attach_comments(fetcher, unique[: min(5, len(unique))])
+    if pullpush_ok:
+        _attach_comments(fetcher, unique[: min(5, len(unique))])
     if not unique and errors:
         return LaneReport(lane="reddit", ok=False, message="; ".join(errors), clips=[])
     return LaneReport(lane="reddit", ok=True, message=f"{len(unique)} threads", clips=unique)
@@ -83,7 +93,7 @@ def _rss(
                 f"https://www.reddit.com/r/{quote_plus(sub)}/search.rss?q={quote_plus(query)}&restrict_sr=on&sort=new&t=week"
             )
     for url in urls[:6]:
-        xml = fetcher.text(url)
+        xml = fetcher.text(url, headers=REDDIT_HEADERS)
         clips.extend(_parse_atom(xml, window, limit))
     return clips
 

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import gzip
+import http.client
 import json
 import ssl
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -77,19 +79,33 @@ class UrlFetcher:
         if headers:
             request_headers.update(headers)
         request = urllib.request.Request(target, headers=request_headers)
-        try:
-            with self._opener.open(request, timeout=self.timeout) as response:
-                raw = response.read(MAX_BODY + 1)
-                if len(raw) > MAX_BODY:
-                    raise FetcherError(f"response too large from {target}")
-                if response.headers.get("Content-Encoding") == "gzip" or raw[:2] == b"\x1f\x8b":
-                    raw = gzip.decompress(raw)
+        last_http: urllib.error.HTTPError | None = None
+        for attempt in range(4):
+            try:
+                with self._opener.open(request, timeout=self.timeout) as response:
+                    raw = response.read(MAX_BODY + 1)
                     if len(raw) > MAX_BODY:
-                        raise FetcherError(f"decompressed response too large from {target}")
-                return raw.decode("utf-8", errors="replace")
-        except FetcherError:
-            raise
-        except urllib.error.HTTPError as exc:
-            raise FetcherError(f"HTTP {exc.code} for {target}", status_code=exc.code) from exc
-        except urllib.error.URLError as exc:
-            raise FetcherError(f"network error for {target}: {exc.reason}") from exc
+                        raise FetcherError(f"response too large from {target}")
+                    if response.headers.get("Content-Encoding") == "gzip" or raw[:2] == b"\x1f\x8b":
+                        raw = gzip.decompress(raw)
+                        if len(raw) > MAX_BODY:
+                            raise FetcherError(f"decompressed response too large from {target}")
+                    return raw.decode("utf-8", errors="replace")
+            except FetcherError:
+                raise
+            except urllib.error.HTTPError as exc:
+                last_http = exc
+                if exc.code == 429 and attempt < 1:
+                    time.sleep(1.0)
+                    continue
+                raise FetcherError(f"HTTP {exc.code} for {target}", status_code=exc.code) from exc
+            except (http.client.IncompleteRead, urllib.error.URLError) as exc:
+                if attempt < 2:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                reason = getattr(exc, "reason", exc)
+                raise FetcherError(f"network error for {target}: {reason}") from exc
+        raise FetcherError(
+            f"HTTP {last_http.code if last_http else '?'} for {target}",
+            status_code=last_http.code if last_http else None,
+        )

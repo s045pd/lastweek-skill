@@ -22,6 +22,18 @@ def test_doctor_reports_ok_and_fail_lanes():
     assert names["news"] is True
 
 
+def test_doctor_reddit_falls_back_to_rss():
+    class PullpushDown(MapFetcher):
+        def json(self, url, headers=None, params=None):
+            raise FetcherError("HTTP 429", status_code=429)
+
+    fetcher = PullpushDown({"https://www.reddit.com/search.rss": "<rss></rss>"})
+    report = run_doctor(fetcher)
+    reddit = next(row for row in report["lanes"] if row["lane"] == "reddit")
+    assert reddit["ok"] is True
+    assert "rss fallback" in reddit["message"]
+
+
 def test_doctor_marks_failed_lane():
     class Boom(MapFetcher):
         def json(self, url, headers=None, params=None):
