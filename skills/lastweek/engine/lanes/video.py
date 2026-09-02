@@ -29,6 +29,8 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher) -> La
         str(limit),
         "--dateafter",
         after,
+        "--datebefore",
+        window.end.strftime("%Y%m%d"),
     ]
     try:
         completed = subprocess.run(command, capture_output=True, text=True, timeout=60, check=False)
@@ -46,6 +48,9 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher) -> La
         clip = _from_row(row, window)
         if clip:
             clips.append(clip)
+    if completed.returncode != 0 and not clips:
+        err = (completed.stderr or completed.stdout or "yt-dlp failed").strip().splitlines()
+        return LaneReport(lane="video", ok=False, message=err[0][:200] if err else "yt-dlp failed", clips=[])
     return LaneReport(lane="video", ok=True, message=f"{len(clips)} videos", clips=clips)
 
 
@@ -54,7 +59,7 @@ def _from_row(row: dict, window: Window) -> Clip | None:
     if row.get("upload_date") and isinstance(row.get("upload_date"), str) and len(row["upload_date"]) == 8:
         raw = row["upload_date"]
         published = parse_stamp(f"{raw[0:4]}-{raw[4:6]}-{raw[6:8]}")
-    if published and not window.contains(published):
+    if published is None or not window.contains(published):
         return None
     video_id = str(row.get("id") or "")
     url = row.get("webpage_url") or (f"https://www.youtube.com/watch?v={video_id}" if video_id else "")

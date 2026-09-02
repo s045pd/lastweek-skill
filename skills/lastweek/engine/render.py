@@ -29,20 +29,22 @@ def render_compare(left: Pulse, right: Pulse) -> str:
     lines = [
         _stamp(left),
         "",
-        f"COMPARE · {left.topic} vs {right.topic}",
+        f"COMPARE · {_clean(left.topic)} vs {_clean(right.topic)}",
         "",
-        f"Heat · {left.topic}",
+        f"Heat · {_clean(left.topic)}",
         *_heat_lines(left.days),
         "",
-        f"Heat · {right.topic}",
+        f"Heat · {_clean(right.topic)}",
         *_heat_lines(right.days),
         "",
         EVIDENCE_OPEN,
-        f"## {left.topic}",
-        *_theme_lines(left),
+        f"## {_clean(left.topic)}",
+        *_theme_lines(left)[1:],
+        *_wow_lines(left),
         "",
-        f"## {right.topic}",
-        *_theme_lines(right),
+        f"## {_clean(right.topic)}",
+        *_theme_lines(right)[1:],
+        *_wow_lines(right),
         EVIDENCE_CLOSE,
         "",
         COVERAGE_OPEN,
@@ -63,9 +65,14 @@ def _stamp(pulse: Pulse) -> str:
     )
 
 
+def _clean(text: str) -> str:
+    cleaned = str(text or "").replace("<!--", "").replace("-->", "")
+    return " ".join(cleaned.split())
+
+
 def _headline(pulse: Pulse) -> str:
     label = SHAPE_LABEL.get(pulse.shape, pulse.shape.upper())
-    return f"{label} · {pulse.topic}"
+    return f"{label} · {_clean(pulse.topic)}"
 
 
 def _heat_lines(strip: list[DayBucket]) -> list[str]:
@@ -98,19 +105,24 @@ def _evidence(pulse: Pulse) -> list[str]:
     quotes = []
     for clip in pulse.clips:
         for quote in clip.quotes:
-            quotes.append(f"- {quote} ({clip.lane})")
+            quotes.append(f"- {_clean(quote)} ({clip.lane})")
     lines.extend(quotes[:8] or ["- (no crowd lines this window)"])
-    if pulse.wow:
-        lines.append("")
-        lines.append("## Week-over-week")
-        if pulse.wow.index is not None:
-            lines.append(f"Index {pulse.wow.index:.2f} vs prior week")
-        lines.append(f"Born {len(pulse.wow.born)} · faded {len(pulse.wow.faded)}")
-        for shift in pulse.wow.accelerating[:5]:
-            lines.append(f"↑ {shift.current.title} ×{shift.ratio:.1f}")
-        for shift in pulse.wow.cooling[:5]:
-            lines.append(f"↓ {shift.current.title} ×{shift.ratio:.1f}")
+    lines.extend(_wow_lines(pulse))
     lines.append(EVIDENCE_CLOSE)
+    return lines
+
+
+def _wow_lines(pulse: Pulse) -> list[str]:
+    if not pulse.wow:
+        return []
+    lines = ["", "## Week-over-week"]
+    if pulse.wow.index is not None:
+        lines.append(f"Index {pulse.wow.index:.2f} vs prior week")
+    lines.append(f"Born {len(pulse.wow.born)} · faded {len(pulse.wow.faded)}")
+    for shift in pulse.wow.accelerating[:5]:
+        lines.append(f"↑ {_clean(shift.current.title)} ×{shift.ratio:.1f}")
+    for shift in pulse.wow.cooling[:5]:
+        lines.append(f"↓ {_clean(shift.current.title)} ×{shift.ratio:.1f}")
     return lines
 
 
@@ -121,13 +133,13 @@ def _theme_lines(pulse: Pulse) -> list[str]:
         return lines
     for index, theme in enumerate(pulse.themes, start=1):
         lanes = ", ".join(theme.lanes)
-        lines.append(f"### {index}. {theme.title} ({len(theme.clips)} clips, {lanes})")
+        lines.append(f"### {index}. {_clean(theme.title)} ({len(theme.clips)} clips, {lanes})")
         for clip in theme.clips[:4]:
             when = clip.published_at.date().isoformat() if clip.published_at else "?"
             score = clip.engagement.get("score", clip.engagement.get("stars", 0))
-            lines.append(f"- [{clip.lane}] {clip.title} ({when}, {score}) {clip.url}")
+            lines.append(f"- [{clip.lane}] {_clean(clip.title)} ({when}, {score}) {_clean(clip.url)}")
             for quote in clip.quotes[:1]:
-                lines.append(f"  > {quote}")
+                lines.append(f"  > {_clean(quote)}")
     return lines
 
 
@@ -141,5 +153,7 @@ def _lane_lines(pulse: Pulse) -> list[str]:
         mass = sum(int(clip.engagement.get("score") or 0) for clip in report.clips)
         status = "ok" if report.ok else "fail"
         extra = f" · {mass} pts" if mass else ""
-        lines.append(f"  {report.lane:<8} {status} · {len(report.clips)} clips{extra} · {report.message}")
+        lines.append(
+            f"  {report.lane:<8} {status} · {len(report.clips)} clips{extra} · {_clean(report.message)}"
+        )
     return lines

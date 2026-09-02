@@ -93,7 +93,7 @@ def _merge(reports: list[LaneReport], window: Window) -> list[Clip]:
     seen: set[str] = set()
     for report in reports:
         for clip in report.clips:
-            if clip.published_at and not window.contains(clip.published_at):
+            if clip.published_at is None or not window.contains(clip.published_at):
                 continue
             key = clip.url or clip.clip_id
             if key in seen:

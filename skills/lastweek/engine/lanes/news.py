@@ -43,7 +43,7 @@ def _parse(xml: str, window: Window) -> list[Clip]:
         published = parse_stamp(item.findtext("pubDate"))
         if not title or not link:
             continue
-        if published and not window.contains(published):
+        if published is None or not window.contains(published):
             continue
         clips.append(
             Clip(

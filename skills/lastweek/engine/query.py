@@ -63,7 +63,12 @@ def tokenize(text: str) -> list[str]:
 
 
 def parse_hints(payload: dict[str, Any] | None) -> Hints:
-    data = payload or {}
+    if payload is None:
+        data: dict[str, Any] = {}
+    elif isinstance(payload, dict):
+        data = payload
+    else:
+        raise ValueError("hints JSON must be an object")
 
     def as_list(value: Any) -> list[str]:
         if value is None:

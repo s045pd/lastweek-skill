@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from engine.coerce import as_int
 from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
@@ -56,8 +57,8 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetch
                 venue="HN",
                 published_at=published,
                 engagement={
-                    "score": int(hit.get("points") or 0),
-                    "comments": int(hit.get("num_comments") or 0),
+                    "score": as_int(hit.get("points")),
+                    "comments": as_int(hit.get("num_comments")),
                 },
             )
         )

@@ -14,6 +14,8 @@ from engine import __version__
 
 USER_AGENT = f"lastweek/{__version__} (+https://github.com/s045pd/lastweek-skill)"
 DEFAULT_TIMEOUT = 20
+MAX_BODY = 2_000_000
+SECRET_HEADERS = ("Authorization", "X-Subscription-Token")
 
 
 class FetcherError(Exception):
@@ -37,10 +39,30 @@ def _join(url: str, params: dict | None) -> str:
     return f"{url}{sep}{query}"
 
 
+class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        previous = urllib.parse.urlparse(req.full_url)
+        nxt = urllib.parse.urlparse(newurl)
+        if previous.netloc.lower() != nxt.netloc.lower() or nxt.scheme != "https":
+            raise FetcherError(f"blocked redirect {previous.netloc} -> {nxt.netloc}")
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is None:
+            return None
+        for header in SECRET_HEADERS:
+            if header in new.headers:
+                del new.headers[header]
+        return new
+
+
+def _opener() -> urllib.request.OpenerDirector:
+    return urllib.request.build_opener(_SafeRedirect)
+
+
 class UrlFetcher:
     def __init__(self, timeout: int = DEFAULT_TIMEOUT) -> None:
         self.timeout = timeout
         self._context = ssl.create_default_context()
+        self._opener = _opener()
 
     def json(self, url: str, headers: dict[str, str] | None = None, params: dict | None = None) -> Any:
         payload = self.text(url, headers=headers, params=params)
@@ -56,11 +78,17 @@ class UrlFetcher:
             request_headers.update(headers)
         request = urllib.request.Request(target, headers=request_headers)
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout, context=self._context) as response:
-                raw = response.read()
+            with self._opener.open(request, timeout=self.timeout) as response:
+                raw = response.read(MAX_BODY + 1)
+                if len(raw) > MAX_BODY:
+                    raise FetcherError(f"response too large from {target}")
                 if response.headers.get("Content-Encoding") == "gzip" or raw[:2] == b"\x1f\x8b":
                     raw = gzip.decompress(raw)
+                    if len(raw) > MAX_BODY:
+                        raise FetcherError(f"decompressed response too large from {target}")
                 return raw.decode("utf-8", errors="replace")
+        except FetcherError:
+            raise
         except urllib.error.HTTPError as exc:
             raise FetcherError(f"HTTP {exc.code} for {target}", status_code=exc.code) from exc
         except urllib.error.URLError as exc:

@@ -37,6 +37,8 @@ def test_video_collect_parses_ytdlp_json(monkeypatch):
     monkeypatch.setattr("engine.lanes.video.shutil.which", lambda _: "/usr/bin/yt-dlp")
 
     class Completed:
+        returncode = 0
+        stderr = ""
         stdout = '{"id":"abc","title":"Weekly recap","webpage_url":"https://youtu.be/abc","upload_date":"20260831","view_count":9}\n'
 
     monkeypatch.setattr("engine.lanes.video.subprocess.run", lambda *a, **k: Completed())

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from engine.config import github_token
+from engine.coerce import as_int
 from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
@@ -82,7 +83,7 @@ def _issue(item: dict, window: Window) -> Clip | None:
         author=user,
         venue=repo or None,
         published_at=published,
-        engagement={"comments": int(item.get("comments") or 0)},
+        engagement={"comments": as_int(item.get("comments"))},
     )
 
 
@@ -100,7 +101,7 @@ def _repo(item: dict, window: Window) -> Clip | None:
         author=(item.get("owner") or {}).get("login"),
         venue=name or None,
         published_at=published,
-        engagement={"stars": int(item.get("stargazers_count") or 0)},
+        engagement={"stars": as_int(item.get("stargazers_count"))},
     )
 
 

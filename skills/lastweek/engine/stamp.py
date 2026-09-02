@@ -12,6 +12,9 @@ def parse_stamp(value: object) -> datetime | None:
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
     if isinstance(value, (int, float)):
+        compact = _compact_date(int(value))
+        if compact:
+            return compact
         ts = float(value)
         if ts > 1e12:
             ts = ts / 1000.0
@@ -33,3 +36,16 @@ def parse_stamp(value: object) -> datetime | None:
         return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     except (TypeError, ValueError, IndexError):
         return None
+
+
+def _compact_date(value: int) -> datetime | None:
+    text = str(value)
+    if len(text) != 8:
+        return None
+    try:
+        parsed = datetime.strptime(text, "%Y%m%d")
+    except ValueError:
+        return None
+    if parsed.year < 1990 or parsed.year > 2100:
+        return None
+    return parsed.replace(tzinfo=timezone.utc)

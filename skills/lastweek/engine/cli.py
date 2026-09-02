@@ -57,9 +57,15 @@ def main(argv: list[str] | None = None) -> int:
         print("lastweek: empty topic after stripping week-language", file=sys.stderr)
         return 2
     now = datetime.now(timezone.utc)
-    window = resolve_window(kind=args.window, as_of=args.as_of, iso_week=args.iso_week, now=now)
-    hints = _hints(args)
-    collectors = _collectors(args.lanes)
+    try:
+        window = resolve_window(kind=args.window, as_of=args.as_of, iso_week=args.iso_week, now=now)
+        hints = _hints(args)
+        collectors = _collectors(args.lanes)
+    except (ValueError, OSError, json.JSONDecodeError, SystemExit) as exc:
+        if isinstance(exc, SystemExit):
+            raise
+        print(f"lastweek: {exc}", file=sys.stderr)
+        return 2
     fetcher = UrlFetcher()
     pair = split_compare(topic)
     if pair:

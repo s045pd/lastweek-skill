@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from engine.models import Clip, DayBucket
 from engine.score import velocity
@@ -14,7 +14,10 @@ def build_strip(clips: list[Clip], window: Window, as_of: datetime) -> list[DayB
     for clip in clips:
         if clip.published_at is None:
             continue
-        day = clip.published_at.date()
+        published = clip.published_at
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=timezone.utc)
+        day = published.astimezone(timezone.utc).date()
         if day in grouped:
             grouped[day].append(clip)
     buckets: list[DayBucket] = []

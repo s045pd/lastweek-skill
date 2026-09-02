@@ -14,8 +14,8 @@ class _Resp:
         self._body = body
         self.headers = {"Content-Encoding": encoding}
 
-    def read(self) -> bytes:
-        return self._body
+    def read(self, size: int | None = None) -> bytes:
+        return self._body if size is None else self._body[:size]
 
     def __enter__(self):
         return self
@@ -25,20 +25,19 @@ class _Resp:
 
 
 def test_url_fetcher_json(monkeypatch):
-    monkeypatch.setattr(
-        "engine.net.urllib.request.urlopen",
-        lambda *args, **kwargs: _Resp(b'{"ok": true}'),
-    )
-    assert UrlFetcher().json("https://example.com") == {"ok": True}
+    fetcher = UrlFetcher()
+    monkeypatch.setattr(fetcher._opener, "open", lambda *args, **kwargs: _Resp(b'{"ok": true}'))
+    assert fetcher.json("https://example.com") == {"ok": True}
 
 
 def test_url_fetcher_http_error(monkeypatch):
     def boom(*args, **kwargs):
         raise urllib.error.HTTPError("https://example.com", 503, "nope", hdrs=None, fp=None)
 
-    monkeypatch.setattr("engine.net.urllib.request.urlopen", boom)
+    fetcher = UrlFetcher()
+    monkeypatch.setattr(fetcher._opener, "open", boom)
     try:
-        UrlFetcher().text("https://example.com")
+        fetcher.text("https://example.com")
         assert False, "expected FetcherError"
     except FetcherError as exc:
         assert exc.status_code == 503

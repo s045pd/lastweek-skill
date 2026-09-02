@@ -18,7 +18,12 @@ class Window:
     label: str
 
     def contains(self, value: datetime | date) -> bool:
-        day = value.date() if isinstance(value, datetime) else value
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                value = value.replace(tzinfo=timezone.utc)
+            day = value.astimezone(timezone.utc).date()
+        else:
+            day = value
         return self.start <= day <= self.end
 
     def day_list(self) -> list[date]:

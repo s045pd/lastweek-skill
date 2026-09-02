@@ -44,10 +44,8 @@ def _events(payload: object) -> list[dict]:
 
 def _from_event(event: dict, window: Window) -> Clip | None:
     published = parse_stamp(event.get("startDate") or event.get("createdAt") or event.get("endDate"))
-    if published and not window.contains(published):
-        # Keep in-window events; drop clearly dated outsiders. Undated events stay.
-        if event.get("startDate") or event.get("createdAt"):
-            return None
+    if published is None or not window.contains(published):
+        return None
     markets = event.get("markets") or []
     market = markets[0] if markets else {}
     prices = _prices(market.get("outcomePrices"))

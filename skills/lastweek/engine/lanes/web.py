@@ -30,7 +30,7 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetch
     clips: list[Clip] = []
     for row in results:
         published = parse_stamp(row.get("page_age") or row.get("age"))
-        if published and not window.contains(published):
+        if published is None or not window.contains(published):
             continue
         url = str(row.get("url") or "")
         clips.append(

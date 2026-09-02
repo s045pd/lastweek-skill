@@ -5,6 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from urllib.parse import quote_plus
 
+from engine.coerce import as_int
 from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
@@ -147,8 +148,8 @@ def _from_submission(row: dict, window: Window) -> Clip | None:
         venue=f"r/{sub}" if sub else None,
         published_at=published,
         engagement={
-            "score": int(row.get("score") or 0),
-            "comments": int(row.get("num_comments") or 0),
+            "score": as_int(row.get("score")),
+            "comments": as_int(row.get("num_comments")),
         },
     )
 
