@@ -1,0 +1,21 @@
+{
+  "name": "lastweek",
+  "version": "0.1.0",
+  "description": "Seven-day community pulse for any topic, ranked by velocity.",
+  "author": {
+    "name": "s045pd",
+    "url": "https://github.com/s045pd"
+  },
+  "homepage": "https://github.com/s045pd/lastweek-skill",
+  "repository": "https://github.com/s045pd/lastweek-skill",
+  "license": "MIT",
+  "keywords": [
+    "weekly-brief",
+    "reddit",
+    "hacker-news",
+    "github",
+    "polymarket",
+    "velocity",
+    "agent-skill"
+  ]
+}

@@ -1,0 +1,16 @@
+name: Feature
+description: A new window, lane, or brief shape
+labels: [enhancement]
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this belongs in a seven-day pulse
+      description: lastweek is week-native. Tell us the weekly job this unlocks.
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Suggested flag or shape
+      placeholder: "--window … / --shape … / a new lane"

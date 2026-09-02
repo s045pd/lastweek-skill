@@ -1,0 +1,22 @@
+name: Bug
+description: Something in the pulse engine or skill contract is wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Expected vs actual, plus the topic and flags you ran.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: doctor output
+      description: Paste `python3 skills/lastweek/run.py doctor` if a lane failed.
+      render: text
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12"

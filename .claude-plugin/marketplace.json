@@ -1,0 +1,24 @@
+{
+  "name": "lastweek-skill",
+  "owner": {
+    "name": "s045pd",
+    "url": "https://github.com/s045pd"
+  },
+  "metadata": {
+    "description": "Marketplace entry for the lastweek weekly pulse skill."
+  },
+  "plugins": [
+    {
+      "name": "lastweek",
+      "description": "Seven-day community pulse for any topic, ranked by velocity.",
+      "version": "0.1.0",
+      "author": {
+        "name": "s045pd",
+        "url": "https://github.com/s045pd"
+      },
+      "source": "./",
+      "category": "productivity",
+      "homepage": "https://github.com/s045pd/lastweek-skill"
+    }
+  ]
+}

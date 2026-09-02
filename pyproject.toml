@@ -1,0 +1,70 @@
+[project]
+name = "lastweek"
+version = "0.1.0"
+description = "Seven-day community pulse for any topic, ranked by velocity"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "s045pd", email = "s045pd@users.noreply.github.com" },
+]
+keywords = [
+  "weekly-brief",
+  "social-listening",
+  "reddit",
+  "hacker-news",
+  "github",
+  "polymarket",
+  "agent-skill",
+]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/s045pd/lastweek-skill"
+Repository = "https://github.com/s045pd/lastweek-skill"
+Issues = "https://github.com/s045pd/lastweek-skill/issues"
+
+[project.scripts]
+lastweek = "engine.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "pytest-cov>=5,<7",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+"" = "skills/lastweek"
+
+[tool.setuptools.packages.find]
+where = ["skills/lastweek"]
+include = ["engine*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["skills/lastweek"]
+addopts = [
+  "-q",
+  "--tb=short",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["skills/lastweek/engine"]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true
+fail_under = 80
