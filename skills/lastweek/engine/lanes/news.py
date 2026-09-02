@@ -10,6 +10,7 @@ from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
 from engine.stamp import parse_stamp
+from engine.query import is_blank_topic
 from engine.window import Window
 
 NEWS = "https://news.google.com/rss/search"
@@ -18,11 +19,14 @@ NEWS = "https://news.google.com/rss/search"
 def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetcher) -> LaneReport:
     del hints
     limit = limit_for(depth)
-    query = topic
-    today = datetime.now(timezone.utc).date()
-    if window.end == today:
-        query = f"{topic} when:7d"
-    url = f"{NEWS}?q={quote_plus(query)}&hl=en-US&gl=US&ceid=US:en"
+    if is_blank_topic(topic):
+        url = "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en"
+    else:
+        query = topic
+        today = datetime.now(timezone.utc).date()
+        if window.end == today:
+            query = f"{topic} when:7d"
+        url = f"{NEWS}?q={quote_plus(query)}&hl=en-US&gl=US&ceid=US:en"
     try:
         xml = fetcher.text(url)
     except FetcherError as exc:

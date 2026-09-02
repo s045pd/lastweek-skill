@@ -41,10 +41,30 @@ _STOP = {
 }
 
 
+SCAN_ALIASES = {"now", "front", "frontpage", "trending", "front page"}
+SCAN_LABEL = "(front of week)"
+
+
 def clean_topic(raw: str) -> str:
     text = _STRIP_RE.sub(" ", raw or "")
     text = re.sub(r"\s+", " ", text).strip(" -:,")
     return text
+
+
+def is_blank_topic(topic: str) -> bool:
+    text = (topic or "").strip()
+    return not text or text == SCAN_LABEL
+
+
+def is_scan(raw_parts: list[str], stripped: str, scan_flag: bool = False) -> bool:
+    if scan_flag:
+        return True
+    if not raw_parts:
+        return True
+    joined = " ".join(raw_parts).strip().lower()
+    if joined in SCAN_ALIASES:
+        return True
+    return not stripped
 
 
 def split_compare(topic: str) -> tuple[str, str] | None:

@@ -8,16 +8,21 @@ from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
 from engine.stamp import parse_stamp
+from engine.query import is_blank_topic
 from engine.window import Window
 
 SEARCH = "https://gamma-api.polymarket.com/public-search"
+EVENTS = "https://gamma-api.polymarket.com/events"
 
 
 def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetcher) -> LaneReport:
     del hints
     limit = limit_for(depth)
     try:
-        payload = fetcher.json(SEARCH, params={"q": topic})
+        if is_blank_topic(topic):
+            payload = fetcher.json(EVENTS, params={"closed": "false", "limit": str(limit)})
+        else:
+            payload = fetcher.json(SEARCH, params={"q": topic})
     except FetcherError as exc:
         return LaneReport(lane="markets", ok=False, message=str(exc), clips=[])
     events = _events(payload)

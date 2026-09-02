@@ -7,6 +7,7 @@ from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
 from engine.stamp import parse_stamp
+from engine.query import is_blank_topic
 from engine.window import Window
 
 BRAVE = "https://api.search.brave.com/res/v1/web/search"
@@ -14,6 +15,8 @@ BRAVE = "https://api.search.brave.com/res/v1/web/search"
 
 def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetcher) -> LaneReport:
     del hints
+    if is_blank_topic(topic):
+        return LaneReport(lane="web", ok=True, message="scan skips web", clips=[])
     key = brave_key()
     if not key:
         return LaneReport(lane="web", ok=True, message="no BRAVE_API_KEY, skipped", clips=[])

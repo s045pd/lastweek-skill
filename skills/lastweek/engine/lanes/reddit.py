@@ -10,6 +10,7 @@ from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
 from engine.stamp import parse_stamp
+from engine.query import is_blank_topic
 from engine.window import Window
 
 PULLPUSH_SUB = "https://api.pullpush.io/reddit/search/submission/"
@@ -35,7 +36,7 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetch
     except FetcherError as exc:
         errors.append(str(exc))
     pullpush_ok = False
-    if not clips:
+    if not clips and not is_blank_topic(topic):
         try:
             clips.extend(_pullpush(fetcher, queries, hints.subreddits, window, limit))
             pullpush_ok = True
@@ -86,14 +87,23 @@ def _rss(
     limit: int,
 ) -> list[Clip]:
     clips: list[Clip] = []
-    urls = [f"{RSS_SEARCH}?q={quote_plus(query)}&sort=new&t=week" for query in queries]
-    for sub in subreddits:
-        for query in queries:
-            urls.append(
-                f"https://www.reddit.com/r/{quote_plus(sub)}/search.rss?q={quote_plus(query)}&restrict_sr=on&sort=new&t=week"
-            )
+    if is_blank_topic(" ".join(queries)):
+        urls = [
+            "https://www.reddit.com/r/all/top.rss?t=week",
+            "https://www.reddit.com/r/all/hot.rss",
+        ]
+    else:
+        urls = [f"{RSS_SEARCH}?q={quote_plus(query)}&sort=new&t=week" for query in queries]
+        for sub in subreddits:
+            for query in queries:
+                urls.append(
+                    f"https://www.reddit.com/r/{quote_plus(sub)}/search.rss?q={quote_plus(query)}&restrict_sr=on&sort=new&t=week"
+                )
     for url in urls[:6]:
-        xml = fetcher.text(url, headers=REDDIT_HEADERS)
+        try:
+            xml = fetcher.text(url, headers=REDDIT_HEADERS)
+        except FetcherError:
+            continue
         clips.extend(_parse_atom(xml, window, limit))
     return clips
 

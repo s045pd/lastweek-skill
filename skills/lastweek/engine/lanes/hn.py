@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from engine.coerce import as_int
 from engine.depth import limit_for
+from engine.query import is_blank_topic
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
 from engine.stamp import parse_stamp
@@ -19,17 +20,21 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetch
     filters = f"created_at_i>={window.start_ts()},created_at_i<={window.end_ts()}"
     hits: list[dict] = []
     errors: list[str] = []
+    blank = is_blank_topic(topic)
     for endpoint in (SEARCH, SEARCH_BY_DATE):
+        params = {
+            "hitsPerPage": limit,
+            "numericFilters": filters,
+        }
+        if blank:
+            if endpoint != SEARCH:
+                continue
+            params = {"tags": "front_page", "hitsPerPage": limit, "query": ""}
+        else:
+            params["tags"] = "story"
+            params["query"] = topic
         try:
-            payload = fetcher.json(
-                endpoint,
-                params={
-                    "query": topic,
-                    "tags": "story",
-                    "hitsPerPage": limit,
-                    "numericFilters": filters,
-                },
-            )
+            payload = fetcher.json(endpoint, params=params)
         except FetcherError as exc:
             errors.append(str(exc))
             continue

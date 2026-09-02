@@ -64,15 +64,30 @@ def test_main_json_doctor(monkeypatch, capsys):
     assert '"ok": false' in capsys.readouterr().out.lower().replace("false", "false")
 
 
-def test_main_help_when_empty(capsys):
-    rc = main([])
-    assert rc == 2
+def test_main_empty_runs_scan(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake_pulse(topic, **kwargs):
+        seen["topic"] = topic
+        return _pulse(topic)
+
+    monkeypatch.setattr("engine.cli.run_pulse", fake_pulse)
+    rc = main(["--as-of", "2026-09-02", "--save-dir", str(tmp_path)])
+    assert rc == 0
+    assert seen["topic"] == "(front of week)"
 
 
-def test_main_rejects_week_only_topic(capsys):
-    rc = main(["this week"])
-    assert rc == 2
-    assert "empty topic" in capsys.readouterr().err
+def test_main_this_week_runs_scan(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake_pulse(topic, **kwargs):
+        seen["topic"] = topic
+        return _pulse(topic)
+
+    monkeypatch.setattr("engine.cli.run_pulse", fake_pulse)
+    rc = main(["this week", "--as-of", "2026-09-02", "--save-dir", str(tmp_path)])
+    assert rc == 0
+    assert seen["topic"] == "(front of week)"
 
 
 def test_standup_uses_monday_window(monkeypatch, tmp_path):

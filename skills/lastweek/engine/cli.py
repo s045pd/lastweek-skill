@@ -16,7 +16,7 @@ from engine.lanes import DEFAULT_LANES, REGISTRY
 from engine.models import Hints
 from engine.net import UrlFetcher
 from engine.pulse import run_pulse
-from engine.query import clean_topic, parse_hints, split_compare
+from engine.query import SCAN_LABEL, clean_topic, is_scan, parse_hints, split_compare
 from engine.render import render_brief, render_compare
 from engine.window import resolve_window
 
@@ -26,7 +26,8 @@ def build_parser() -> argparse.ArgumentParser:
         prog="lastweek",
         description="Seven-day community pulse for a topic.",
     )
-    parser.add_argument("topic", nargs="*", help="Topic, or `doctor`")
+    parser.add_argument("topic", nargs="*", help="Topic, `doctor`, or omit/`now` for no-keyword scan")
+    parser.add_argument("--scan", action="store_true", help="No keyword. Pull this week's front pages.")
     parser.add_argument("--window", choices=["rolling", "iso", "monday"], default="rolling")
     parser.add_argument("--iso-week", dest="iso_week", help="ISO week like 2026-W36")
     parser.add_argument("--as-of", dest="as_of", help="YYYY-MM-DD end date")
@@ -47,13 +48,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if not args.topic:
-        parser.print_help()
-        return 2
     if args.topic == ["doctor"]:
         return _doctor(args.emit)
     topic = clean_topic(" ".join(args.topic))
-    if not topic:
+    scan = is_scan(args.topic, topic, scan_flag=args.scan)
+    if scan:
+        topic = SCAN_LABEL
+    elif not topic:
         print("lastweek: empty topic after stripping week-language", file=sys.stderr)
         return 2
     now = datetime.now(timezone.utc)

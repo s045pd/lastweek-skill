@@ -79,7 +79,9 @@ Resolve three things before any network call:
    - `--wow` when they ask what changed versus the previous week, or when
      shape is `wrap`
 
-If there is no topic, ask for one and stop.
+If there is no topic, or the user says "this week" / "what's moving" without a
+subject, run a **no-keyword scan** (`--scan` or `now`): front pages, not a
+search query. Do not invent a keyword.
 
 Confirm in one line, then go:
 
@@ -127,6 +129,9 @@ Skip empty keys. Do not fabricate handles.
 
 ```bash
 SKILL_DIR="<absolute directory of this SKILL.md>"
+
+# No keyword: this week's front pages
+python3 "$SKILL_DIR/run.py" --scan --emit=brief
 
 # Default pulse, rolling seven days
 python3 "$SKILL_DIR/run.py" "OpenClaw" --emit=brief --hints "$HINTS"

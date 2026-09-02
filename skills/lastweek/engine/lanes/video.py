@@ -9,11 +9,14 @@ import subprocess
 from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.stamp import parse_stamp
+from engine.query import is_blank_topic
 from engine.window import Window
 
 
 def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher) -> LaneReport:
     del hints, fetcher
+    if is_blank_topic(topic):
+        return LaneReport(lane="video", ok=True, message="scan skips video", clips=[])
     binary = shutil.which("yt-dlp")
     if not binary:
         return LaneReport(lane="video", ok=True, message="yt-dlp not on PATH, skipped", clips=[])

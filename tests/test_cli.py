@@ -27,3 +27,10 @@ def test_doctor_subcommand_exists():
     parser = build_parser()
     args = parser.parse_args(["doctor"])
     assert args.topic == ["doctor"]
+
+
+def test_parser_scan_flag():
+    parser = build_parser()
+    args = parser.parse_args(["--scan"])
+    assert args.scan is True
+    assert args.topic == []

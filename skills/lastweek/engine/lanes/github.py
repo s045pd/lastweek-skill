@@ -8,6 +8,7 @@ from engine.depth import limit_for
 from engine.models import Clip, Hints, LaneReport
 from engine.net import Fetcher, FetcherError
 from engine.stamp import parse_stamp
+from engine.query import is_blank_topic
 from engine.window import Window
 
 ISSUES = "https://api.github.com/search/issues"
@@ -23,7 +24,10 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetch
     span = f"{window.start.isoformat()}..{window.end.isoformat()}"
     clips: list[Clip] = []
     errors: list[str] = []
-    issue_queries = [f"{topic} created:{span}"]
+    if is_blank_topic(topic):
+        issue_queries = [f"is:issue created:{span}"]
+    else:
+        issue_queries = [f"{topic} created:{span}"]
     if hints.github_user:
         issue_queries.append(f"author:{hints.github_user} created:{span}")
     for repo in hints.github_repos:
@@ -42,7 +46,10 @@ def collect(topic: str, window: Window, hints: Hints, depth: str, fetcher: Fetch
             clip = _issue(item, window)
             if clip:
                 clips.append(clip)
-    repo_queries = [f"{topic} pushed:{span}"]
+    if is_blank_topic(topic):
+        repo_queries = [f"is:public stars:>20 pushed:{span}"]
+    else:
+        repo_queries = [f"{topic} pushed:{span}"]
     if hints.github_user:
         repo_queries.append(f"user:{hints.github_user} pushed:{span}")
     for query in repo_queries:
