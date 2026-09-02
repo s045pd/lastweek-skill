@@ -27,7 +27,7 @@ def test_main_prints_brief(monkeypatch, tmp_path, capsys):
     rc = main(["weekly briefs", "--as-of", "2026-09-02", "--save-dir", str(tmp_path)])
     assert rc == 0
     out = capsys.readouterr().out
-    assert "PULSE · weekly briefs" in out
+    assert "This week's pulse: weekly briefs" in out
     assert "⏱ lastweek" in out
     saved = list(tmp_path.glob("*.md"))
     assert saved
@@ -41,7 +41,7 @@ def test_main_compare(monkeypatch, tmp_path, capsys):
     rc = main(["Claude vs Codex", "--as-of", "2026-09-02", "--save-dir", str(tmp_path)])
     assert rc == 0
     out = capsys.readouterr().out
-    assert "COMPARE · Claude vs Codex" in out
+    assert "Compare: Claude vs Codex this week." in out
 
 
 def test_main_doctor(monkeypatch, capsys):
@@ -67,6 +67,38 @@ def test_main_json_doctor(monkeypatch, capsys):
 def test_main_help_when_empty(capsys):
     rc = main([])
     assert rc == 2
+
+
+def test_main_rejects_week_only_topic(capsys):
+    rc = main(["this week"])
+    assert rc == 2
+    assert "empty topic" in capsys.readouterr().err
+
+
+def test_standup_uses_monday_window(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake_pulse(topic, **kwargs):
+        seen["window"] = kwargs["window"]
+        return _pulse(topic)
+
+    monkeypatch.setattr("engine.cli.run_pulse", fake_pulse)
+    rc = main(["OpenClaw", "--shape", "standup", "--as-of", "2026-09-02", "--save-dir", str(tmp_path)])
+    assert rc == 0
+    assert seen["window"].kind == "monday"
+
+
+def test_wrap_turns_on_wow(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake_pulse(topic, **kwargs):
+        seen["wow"] = kwargs["wow"]
+        return _pulse(topic)
+
+    monkeypatch.setattr("engine.cli.run_pulse", fake_pulse)
+    rc = main(["OpenClaw", "--shape", "wrap", "--as-of", "2026-09-02", "--save-dir", str(tmp_path)])
+    assert rc == 0
+    assert seen["wow"] is True
 
 
 def test_main_doctor_who_is_research(monkeypatch, tmp_path):

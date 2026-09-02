@@ -5,6 +5,8 @@ def test_clean_topic_strips_week_language_not_the_subject():
     assert clean_topic("OpenClaw this week") == "OpenClaw"
     assert clean_topic("what happened last week with Nvidia") == "with Nvidia"
     assert clean_topic("GPT-4o") == "GPT-4o"
+    assert clean_topic("this week") == ""
+    assert clean_topic("weekly wrap") == ""
 
 
 def test_split_compare_finds_vs_and_versus():

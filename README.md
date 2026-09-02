@@ -17,7 +17,7 @@ python3 skills/lastweek/run.py "OpenClaw"
 ```
 ⏱ lastweek 0.1.0 · rolling 7d · 2026-08-27 → 2026-09-02
 
-PULSE · OpenClaw
+This week's pulse: OpenClaw
 
 Heat by day
 Thu ██░░░░ 2
@@ -73,7 +73,7 @@ Polymarket, and Google News RSS run with zero keys.
 |---|---|
 | Higher GitHub quota | `GITHUB_TOKEN` or `gh auth login` |
 | Web lane | `BRAVE_API_KEY` |
-| YouTube | `yt-dlp` on PATH |
+| YouTube | `yt-dlp` on PATH and `--lanes …,video` |
 | Custom dump folder | `LASTWEEK_SAVE_DIR` (default `~/Documents/LastWeek`) |
 
 Copy [.env.example](.env.example) to `~/.config/lastweek/env` if you want a

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from engine.lanes import github, hn, markets, news, reddit, video, web
 
-DEFAULT_LANES = ["reddit", "hn", "github", "markets", "news", "video"]
+DEFAULT_LANES = ["reddit", "hn", "github", "markets", "news"]
 
 REGISTRY = {
     "reddit": reddit.collect,

@@ -41,7 +41,26 @@ def save_dir(config: dict[str, str] | None = None) -> Path:
 
 def github_token(config: dict[str, str] | None = None) -> str | None:
     values = config or load_config()
-    return values.get("GITHUB_TOKEN") or values.get("GH_TOKEN") or None
+    token = values.get("GITHUB_TOKEN") or values.get("GH_TOKEN")
+    if token:
+        return token
+    import shutil
+    import subprocess
+
+    if not shutil.which("gh"):
+        return None
+    try:
+        completed = subprocess.run(
+            ["gh", "auth", "token"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    got = completed.stdout.strip()
+    return got or None
 
 
 def brave_key(config: dict[str, str] | None = None) -> str | None:

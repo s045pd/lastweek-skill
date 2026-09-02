@@ -11,9 +11,9 @@ COVERAGE_OPEN = "<!-- COVERAGE -->"
 COVERAGE_CLOSE = "<!-- END COVERAGE -->"
 
 SHAPE_LABEL = {
-    "pulse": "PULSE",
-    "wrap": "WRAP",
-    "standup": "STANDUP",
+    "pulse": "This week's pulse",
+    "wrap": "Week wrap",
+    "standup": "Since Monday",
 }
 
 
@@ -29,7 +29,7 @@ def render_compare(left: Pulse, right: Pulse) -> str:
     lines = [
         _stamp(left),
         "",
-        f"COMPARE · {_clean(left.topic)} vs {_clean(right.topic)}",
+        f"Compare: {_clean(left.topic)} vs {_clean(right.topic)} this week.",
         "",
         f"Heat · {_clean(left.topic)}",
         *_heat_lines(left.days),
@@ -72,7 +72,7 @@ def _clean(text: str) -> str:
 
 def _headline(pulse: Pulse) -> str:
     label = SHAPE_LABEL.get(pulse.shape, pulse.shape.upper())
-    return f"{label} · {_clean(pulse.topic)}"
+    return f"{label}: {_clean(pulse.topic)}"
 
 
 def _heat_lines(strip: list[DayBucket]) -> list[str]:

@@ -33,7 +33,7 @@ def test_brief_stamp_and_coverage_markers():
     text = render_brief(_pulse())
     assert text.splitlines()[0].startswith("⏱ lastweek 0.1.0")
     assert "2026-08-27 → 2026-09-02" in text
-    assert "PULSE · weekly briefs" in text
+    assert "This week's pulse: weekly briefs" in text
     assert "<!-- COVERAGE -->" in text
     assert "<!-- END COVERAGE -->" in text
     assert "<!-- EVIDENCE" in text
@@ -54,8 +54,8 @@ def test_brief_avoids_last30days_voice():
 
 
 def test_wrap_and_standup_labels():
-    assert "WRAP · weekly briefs" in render_brief(_pulse("wrap"))
-    assert "STANDUP · weekly briefs" in render_brief(_pulse("standup"))
+    assert "Week wrap: weekly briefs" in render_brief(_pulse("wrap"))
+    assert "Since Monday: weekly briefs" in render_brief(_pulse("standup"))
 
 
 def test_compare_render_names_both_sides():
@@ -64,5 +64,5 @@ def test_compare_render_names_both_sides():
     right = _pulse()
     right.topic = "Codex"
     text = render_compare(left, right)
-    assert "COMPARE · Claude vs Codex" in text
+    assert "Compare: Claude vs Codex this week." in text
     assert "<!-- COVERAGE -->" in text

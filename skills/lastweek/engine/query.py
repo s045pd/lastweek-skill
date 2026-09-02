@@ -44,7 +44,7 @@ _STOP = {
 def clean_topic(raw: str) -> str:
     text = _STRIP_RE.sub(" ", raw or "")
     text = re.sub(r"\s+", " ", text).strip(" -:,")
-    return text or (raw or "").strip()
+    return text
 
 
 def split_compare(topic: str) -> tuple[str, str] | None:

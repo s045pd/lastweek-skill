@@ -57,6 +57,10 @@ def main(argv: list[str] | None = None) -> int:
         print("lastweek: empty topic after stripping week-language", file=sys.stderr)
         return 2
     now = datetime.now(timezone.utc)
+    if args.shape == "standup" and args.window == "rolling" and not args.iso_week:
+        args.window = "monday"
+    if args.shape == "wrap":
+        args.wow = True
     try:
         window = resolve_window(kind=args.window, as_of=args.as_of, iso_week=args.iso_week, now=now)
         hints = _hints(args)
@@ -94,6 +98,8 @@ def main(argv: list[str] | None = None) -> int:
         text = render_compare(left, right)
         payload = {"schema": "lastweek.compare/v1", "left": left.to_dict(), "right": right.to_dict()}
         saved = _save(args, slug=f"{_slug(pair[0])}-vs-{_slug(pair[1])}", window=window, text=text, payload=payload)
+        if saved and args.emit != "json":
+            text = text.rstrip() + f"\nWrote {saved}\n"
         return _emit(args.emit, text, payload, saved)
     pulse = run_pulse(
         topic,

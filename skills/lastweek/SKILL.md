@@ -7,6 +7,7 @@ description: >
   change, an ISO-week recap, or runs /lastweek. Rank Reddit, Hacker News,
   GitHub, Polymarket, YouTube, and news by velocity, not monthly volume.
 argument-hint: "lastweek nvidia | lastweek OpenClaw --wow | lastweek Claude vs Codex --shape wrap"
+allowed-tools: Bash, Read, Write, WebSearch
 homepage: https://github.com/s045pd/lastweek-skill
 license: MIT
 user-invocable: true
@@ -42,8 +43,9 @@ list.
    supplement after the engine, never a replacement.
 2. **Keep the stamp.** Line 1 of the user-facing brief is the engine stamp
    (`⏱ lastweek … · start → end`). Do not invent a magazine headline above it.
-3. **Name the shape.** After one blank line, the body opens with
-   `This week's pulse:` (or the wrap / standup variants below). No `# Title`.
+3. **Name the shape.** Pass through the engine shape line
+   (`This week's pulse: {topic}`, `Week wrap:`, `Since Monday:`, or
+   `Compare: A vs B this week.`). Then write the paragraphs. No extra `# Title`.
 4. **Show the days.** The engine heat strip is part of the deliverable. A
    weekly brief without Monday-Sunday (or since-Monday) texture is incomplete.
 5. **Quote people.** If the evidence block has crowd lines, weave at least two
@@ -125,23 +127,25 @@ Skip empty keys. Do not fabricate handles.
 
 ```bash
 SKILL_DIR="<absolute directory of this SKILL.md>"
-python3 "$SKILL_DIR/run.py" "{TOPIC}" \
-  --emit=brief \
-  --shape {pulse|wrap|standup} \
-  --window {rolling|iso|monday} \
-  --hints "$HINTS"
+
+# Default pulse, rolling seven days
+python3 "$SKILL_DIR/run.py" "OpenClaw" --emit=brief --hints "$HINTS"
+
+# Monday standup (engine forces --window monday)
+python3 "$SKILL_DIR/run.py" "OpenClaw" --emit=brief --shape standup --hints "$HINTS"
+
+# Friday wrap with week-over-week (engine forces --wow)
+python3 "$SKILL_DIR/run.py" "OpenClaw" --emit=brief --shape wrap --iso-week 2026-W36 --hints "$HINTS"
 ```
 
 Add when they apply:
 
-- `--wow`
-- `--iso-week 2026-W36`
 - `--as-of YYYY-MM-DD`
 - `--depth skim|normal|deep`
 - `--subreddits a,b`
 - `--github-user name`
 - `--github-repo owner/name`
-- `--lanes reddit,hn,github,markets,news,video,web`
+- `--lanes reddit,hn,github,markets,news,video,web` (video is off by default)
 
 Foreground. Timeout 180000 ms. Read stdout in full.
 
@@ -161,7 +165,7 @@ Optional env (never required for Reddit / HN / GitHub / Polymarket / news):
 - `GITHUB_TOKEN` or `gh auth` - higher GitHub search quota
 - `BRAVE_API_KEY` - turns on the web lane
 - `LASTWEEK_SAVE_DIR` - where raw dumps land (default `~/Documents/LastWeek`)
-- yt-dlp on PATH - YouTube lane
+- yt-dlp on PATH plus `--lanes …,video` - YouTube lane
 
 ## READ
 

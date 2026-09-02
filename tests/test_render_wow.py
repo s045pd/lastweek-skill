@@ -31,7 +31,7 @@ def test_brief_includes_wow_section():
         prior_window=prior_window(week),
     )
     text = render_brief(pulse)
-    assert "WRAP · Nvidia" in text
+    assert "Week wrap: Nvidia" in text
     assert "Week-over-week" in text
     assert "Index 2.50" in text
     assert "↑ Nvidia earnings thread" in text
